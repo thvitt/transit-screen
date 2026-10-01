@@ -20,7 +20,7 @@ const element = (tag, className, ...children) => {
 export function startScreen(root, config) {
   const lang = resolveLanguage(config.lang);
   const t = strings(lang);
-  const timeFormat = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit" });
+  const timeFormat = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   const formatTime = (date) => timeFormat.format(date);
   const tidy = (name) => stripPrefixes(name, config.strip);
 
