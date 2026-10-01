@@ -36,6 +36,8 @@ export function startScreen(root, config) {
   const clock = element("time", "clock");
   const status = element("p", "status", t.loading);
   const board = element("div", "board");
+  const setupLink = element("a", "setup-link", t.edit);
+  setupLink.href = `?setup&${location.search.slice(1)}`;
   board.style.setProperty("--groups", String(Math.max(1, config.groups.length + (config.other ? 1 : 0))));
   root.append(
     element(
@@ -46,7 +48,7 @@ export function startScreen(root, config) {
       clock,
     ),
     board,
-    element("footer", "legend", t.scheduledHint),
+    element("footer", "legend", setupLink, element("span", "", t.scheduledHint)),
   );
 
   async function refresh() {

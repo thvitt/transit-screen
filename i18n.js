@@ -10,6 +10,7 @@ const STRINGS = {
     stale: (time) => `No live connection since ${time}`,
     failed: "Cannot reach transitous.org",
     scheduledHint: "Grey times are timetable, not live",
+    edit: "Edit this screen",
   },
   de: {
     now: "jetzt",
@@ -22,6 +23,7 @@ const STRINGS = {
     stale: (time) => `Keine Verbindung seit ${time}`,
     failed: "transitous.org nicht erreichbar",
     scheduledHint: "Graue Zeiten laut Fahrplan, ohne Echtzeit",
+    edit: "Anzeige bearbeiten",
   },
 };
 
