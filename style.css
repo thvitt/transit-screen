@@ -1,14 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
+
 :root {
-  --enamel: #0f3a40;
-  --panel: #14484f;
-  --rule: #24606a;
-  --chalk: #eef3ec;
-  --muted: #93b4b2;
+  --enamel: #00215bff;
+  --panel: #063d79;
+  --rule: #275a98ff;
+  --chalk: #f2f4f6ff;
+  --muted: #9c9ea0ff;
   --signal: #f5c23e;
-  --alarm: #ef5b45;
+  --alarm: #ff382aff;
   --scale: 1;
-  --sans: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
-  --mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+  --sans: "Lato", system-ui, sans-serif;
+  --mono: "Lato", ui-monospace, monospace;
   color-scheme: dark;
 }
 
