@@ -7,6 +7,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="style.css" />
+    <script>
+      var startupErrors = [];
+      window.addEventListener("error", function (event) {
+        startupErrors.push(event.message + " (" + event.filename + ":" + event.lineno + ")");
+      });
+      window.addEventListener("unhandledrejection", function (event) {
+        startupErrors.push(String(event.reason));
+      });
+      setTimeout(function () {
+        var app = document.getElementById("app");
+        if (app.childNodes.length) return;
+        var report = document.createElement("pre");
+        report.className = "startup-failure";
+        report.textContent =
+          "The departure screen did not start.\n\n" +
+          navigator.userAgent + "\n\n" +
+          (startupErrors.join("\n") || "No script errors reported; the browser may not support ES modules.");
+        app.appendChild(report);
+      }, 10000);
+    </script>
     <script type="module" src="main.js"></script>
   </head>
   <body>
