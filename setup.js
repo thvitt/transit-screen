@@ -69,7 +69,12 @@ export function startSetup(root, initial) {
           element(
             "div",
             { class: "row" },
-            field("Name on screen", bind(stop.label, (v) => (stop.label = v), { placeholder: "e.g. Campusbrücke" })),
+            field(
+              "Name on screen",
+              bind(stop.label, (v) => (stop.label = v), {
+                placeholder: stop.name ? stripPrefixes(stop.name, config.strip) : "e.g. Campusbrücke",
+              }),
+            ),
             field(
               "Walk (min)",
               bind(stop.walk || "", (v) => (stop.walk = Number(v) || 0), { type: "number", min: 0, max: 60 }),
@@ -92,6 +97,15 @@ export function startSetup(root, initial) {
         ),
       ),
     );
+  }
+
+  async function lookUpStopNames() {
+    const unnamed = config.stops.filter((stop) => !stop.name);
+    const results = await Promise.allSettled(unnamed.map((stop) => fetchDepartures({ id: stop.id }, { n: 1 })));
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled" && result.value.length) unnamed[index].name = result.value[0].stopName;
+    });
+    if (!stopsSection.contains(document.activeElement)) renderStops();
   }
 
   function ruleEditor(group, rule, index) {
@@ -231,7 +245,7 @@ export function startSetup(root, initial) {
               {
                 class: "quiet",
                 onclick: () => {
-                  config.stops.push({ id: stop.id, label: "", walk: 0 });
+                  config.stops.push({ id: stop.id, label: "", walk: 0, name: stop.name });
                   renderStops();
                   sync();
                 },
@@ -350,9 +364,14 @@ export function startSetup(root, initial) {
       { class: "row" },
       field(
         "Remove town prefix from names",
-        bind(config.strip.join(", "), (v) => (config.strip = v.split(",").map((s) => s.trim()).filter(Boolean)), {
-          placeholder: "e.g. Würzburg, Wü",
-        }),
+        bind(
+          config.strip.join(", "),
+          (v) => {
+            config.strip = v.split(",").map((s) => s.trim()).filter(Boolean);
+            renderStops();
+          },
+          { placeholder: "e.g. Würzburg, Wü" },
+        ),
       ),
       field(
         "Show next (min)",
@@ -379,4 +398,5 @@ export function startSetup(root, initial) {
   renderStops();
   renderGroups();
   sync();
+  lookUpStopNames();
 }
