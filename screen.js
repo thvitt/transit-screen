@@ -43,13 +43,14 @@ export function startScreen(root, config) {
   root.append(
     element(
       "header",
-      "masthead",
+      `masthead${config.qr === null ? "" : " has-qr"}`,
       element("h1", "title", config.title || config.stops.map((s) => s.label).filter(Boolean).join(", ")),
       status,
       clock,
+      qrCode(),
     ),
     board,
-    element("footer", "legend", setupLink, element("span", "", t.scheduledHint), qrCode()),
+    element("footer", "legend", setupLink, element("span", "", t.scheduledHint)),
   );
 
   function qrCode() {

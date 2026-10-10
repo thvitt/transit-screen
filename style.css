@@ -9,6 +9,7 @@
   --signal: #f5c23e;
   --alarm: #ff382aff;
   --scale: 1;
+  --qr-size: 4.5em;
   --sans: "Lato", system-ui, sans-serif;
   --mono: "Lato", ui-monospace, monospace;
   color-scheme: dark;
@@ -253,7 +254,6 @@ body {
 .legend {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
   gap: 1em;
   font-size: 0.48em;
   color: var(--muted);
@@ -263,9 +263,30 @@ body {
   margin-left: auto;
 }
 
+.masthead.has-qr {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+
+.masthead.has-qr .status {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin: 0 calc(var(--qr-size) + 1em) 0 0;
+}
+
+.masthead.has-qr .clock {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .qr {
-  flex: none;
-  width: 9em;
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  width: var(--qr-size);
   line-height: 0;
 }
 
