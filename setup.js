@@ -1,4 +1,11 @@
-import { fetchDepartures, searchStops, serializeConfig, stripPrefixes } from "./lib.js";
+import {
+  fetchDepartures,
+  searchStops,
+  serializeConfig,
+  shortcutFileName,
+  shortcutHtml,
+  stripPrefixes,
+} from "./lib.js";
 
 const element = (tag, attributes = {}, ...children) => {
   const node = document.createElement(tag);
@@ -25,11 +32,15 @@ export function startSetup(root, initial) {
 
   const output = element("output");
   const openLink = element("a", { target: "_blank" }, "Open screen");
+  const shortcutLink = element("a", {}, "Download shortcut file");
 
   function sync() {
     const url = screenUrl();
     output.textContent = url;
     openLink.href = url;
+    URL.revokeObjectURL(shortcutLink.href);
+    shortcutLink.href = URL.createObjectURL(new Blob([shortcutHtml(url, config.title)], { type: "text/html" }));
+    shortcutLink.download = shortcutFileName(config.title);
     const setupUrl = new URL(url);
     setupUrl.search = `setup&${setupUrl.search.slice(1)}`;
     history.replaceState(null, "", setupUrl);
@@ -357,7 +368,12 @@ export function startSetup(root, initial) {
 
     element("h2", {}, "Screen link"),
     output,
-    element("div", { class: "actions" }, copyButton, openLink),
+    element("div", { class: "actions" }, copyButton, openLink, shortcutLink),
+    element(
+      "p",
+      { class: "hint" },
+      "The shortcut file only redirects to this link. Put it on any web server, e.g. as hubland.html next to this page, to get a short address for your signage player.",
+    ),
   );
 
   renderStops();

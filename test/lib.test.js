@@ -8,6 +8,8 @@ import {
   ruleMatches,
   selectUpcoming,
   serializeConfig,
+  shortcutFileName,
+  shortcutHtml,
   stripPrefixes,
 } from "../lib.js";
 
@@ -140,4 +142,18 @@ test("normalizes an API stop time", () => {
   assert.equal(d.color, "#f29205");
   assert.equal(d.departure - d.scheduled, 60_000);
   assert.equal(d.cancelled, false);
+});
+
+test("shortcut page redirects to the escaped screen URL", () => {
+  const url = "https://example.org/transit/?title=A&B&s=x|\"y\"";
+  const html = shortcutHtml(url, "Hubland <Campus>");
+  assert.match(html, /<meta http-equiv="refresh" content="0; url=https:\/\/example\.org\/transit\/\?title=A&amp;B&amp;s=x\|&quot;y&quot;">/);
+  assert.match(html, /location\.replace\("https:\/\/example\.org\/transit\/\?title=A&B&s=x\|\\"y\\""\)/);
+  assert.match(html, /<title>Hubland &lt;Campus&gt;<\/title>/);
+});
+
+test("shortcut file name is a readable slug of the title", () => {
+  assert.equal(shortcutFileName("Hubland Campus / Süd"), "hubland-campus-sud.html");
+  assert.equal(shortcutFileName("Straße"), "strasse.html");
+  assert.equal(shortcutFileName(""), "departures.html");
 });

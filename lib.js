@@ -184,3 +184,35 @@ export async function searchStops(text, { fetchImpl = fetch } = {}) {
     modes: p.modes ?? [],
   }));
 }
+
+const escapeHtml = (text) =>
+  String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+export function shortcutHtml(url, title) {
+  const href = escapeHtml(url);
+  const script = JSON.stringify(url).replace(/</g, "\\u003c");
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${escapeHtml(title || "Departures")}</title>
+    <meta http-equiv="refresh" content="0; url=${href}">
+    <script>location.replace(${script});</script>
+  </head>
+  <body>
+    <a href="${href}">${escapeHtml(title || "Departures")}</a>
+  </body>
+</html>
+`;
+}
+
+export function shortcutFileName(title) {
+  const slug = (title ?? "")
+    .toLowerCase()
+    .replace(/ß/g, "ss")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `${slug || "departures"}.html`;
+}

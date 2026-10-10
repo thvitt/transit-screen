@@ -16,6 +16,11 @@ Open <http://localhost:8000/>. With no stops configured you get the setup page:
 search for stops, define destination groups, and copy the screen link. Add
 `setup` to any screen URL (`?setup&s=…`) to edit it again.
 
+For a short address, use *Download shortcut file* on the setup page. It saves a
+small HTML file that redirects to the full screen link. Put it on any web
+server, e.g. as `hubland.html` next to `index.html`, and point the signage
+player at that instead.
+
 The screen refreshes data every 30 s and the countdowns every 5 s. Rows that
 don't fit are left off, so it never scrolls. If the API can't be reached, the
 last known departures stay up with a warning, and the page reloads itself once
