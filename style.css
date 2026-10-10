@@ -253,6 +253,7 @@ body {
 .legend {
   display: flex;
   justify-content: space-between;
+  align-items: flex-end;
   gap: 1em;
   font-size: 0.48em;
   color: var(--muted);
@@ -260,6 +261,17 @@ body {
 
 .legend > span {
   margin-left: auto;
+}
+
+.qr {
+  flex: none;
+  width: 9em;
+  line-height: 0;
+}
+
+.qr svg {
+  width: 100%;
+  height: auto;
 }
 
 .setup-link {

@@ -61,6 +61,7 @@ export function parseConfig(search) {
     title: params.get("title") ?? DEFAULTS.title,
     lang: params.get("lang") ?? DEFAULTS.lang,
     other: params.get("other") ?? DEFAULTS.other,
+    qr: params.has("qr") ? params.get("qr") : null,
     refresh: number("refresh"),
     horizon: number("horizon"),
     n: number("n"),
@@ -75,6 +76,7 @@ export function serializeConfig(config) {
   for (const group of config.groups) params.append("g", serializeGroup(group));
   if (config.other) params.set("other", config.other);
   for (const prefix of config.strip ?? []) params.append("strip", prefix);
+  if (config.qr !== null && config.qr !== undefined) params.set("qr", config.qr);
   for (const key of ["lang", "refresh", "horizon", "n", "scale"]) {
     if (config[key] && config[key] !== DEFAULTS[key]) params.set(key, String(config[key]));
   }

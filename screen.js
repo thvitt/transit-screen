@@ -7,6 +7,7 @@ import {
   stripPrefixes,
 } from "./lib.js";
 import { resolveLanguage, strings } from "./i18n.js";
+import { qrCodeSvg } from "./qr.js";
 
 const RENDER_INTERVAL_MS = 5_000;
 
@@ -48,8 +49,15 @@ export function startScreen(root, config) {
       clock,
     ),
     board,
-    element("footer", "legend", setupLink, element("span", "", t.scheduledHint)),
+    element("footer", "legend", setupLink, element("span", "", t.scheduledHint), qrCode()),
   );
+
+  function qrCode() {
+    if (config.qr === null) return null;
+    const box = element("div", "qr");
+    box.innerHTML = qrCodeSvg(new URL(config.qr || location.href, location.href).href);
+    return box;
+  }
 
   async function refresh() {
     const results = await Promise.allSettled(config.stops.map((stop) => fetchDepartures(stop, config)));

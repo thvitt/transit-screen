@@ -35,6 +35,7 @@ a night.
 | `other=Heading` | Show departures that match no group under this heading. Hidden if not set. |
 | `title=Text` | Title in the header. Defaults to the stop labels. |
 | `strip=Prefix` | Remove this prefix from stop names and destinations (repeatable), e.g. `Würzburg`. |
+| `qr` or `qr=URL` | Show a QR code in the lower right corner, linking to this screen or to `URL` (e.g. a shortcut file; shorter links give coarser, easier to scan codes). |
 | `lang=de\|en` | Interface language, defaults to the browser's. |
 | `scale=1.2` | Text size factor. |
 | `horizon=120` | Only show departures within this many minutes. |
@@ -66,6 +67,9 @@ departures are shown in one column.
 (Joined into a single line.)
 
 ## Development
+
+`vendor/` contains Kazuhiko Arase's MIT-licensed
+[qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator).
 
 Pure logic lives in `lib.js` and is tested with Node's built-in test runner:
 

@@ -275,6 +275,21 @@ export function startSetup(root, initial) {
     "Copy link",
   );
 
+  const qrUrl = bind(config.qr ?? "", (v) => (config.qr = v.trim()), {
+    type: "url",
+    placeholder: "Link to this screen",
+    disabled: config.qr === null,
+  });
+  const qrToggle = element("input", {
+    type: "checkbox",
+    checked: config.qr !== null,
+    onchange: (event) => {
+      config.qr = event.target.checked ? qrUrl.value.trim() : null;
+      qrUrl.disabled = !event.target.checked;
+      sync();
+    },
+  });
+
   const language = element(
     "select",
     {
@@ -309,6 +324,13 @@ export function startSetup(root, initial) {
         bind(config.scale, (v) => (config.scale = Number(v) || 1), { type: "number", step: 0.1, min: 0.5, max: 3 }),
         "narrow",
       ),
+    ),
+
+    element(
+      "div",
+      { class: "row" },
+      field("QR code", qrToggle, "narrow"),
+      field("QR code link (empty: link to this screen, use your short shortcut address if you have one)", qrUrl),
     ),
 
     element("h2", {}, "Stops"),

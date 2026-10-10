@@ -157,3 +157,13 @@ test("shortcut file name is a readable slug of the title", () => {
   assert.equal(shortcutFileName("Straße"), "strasse.html");
   assert.equal(shortcutFileName(""), "departures.html");
 });
+
+test("qr is off by default, on when present, and may carry its own URL", () => {
+  assert.equal(parseConfig("s=a").qr, null);
+  assert.equal(parseConfig("s=a&qr").qr, "");
+  const withUrl = parseConfig("s=a&qr=https://example.org/hubland.html");
+  assert.equal(withUrl.qr, "https://example.org/hubland.html");
+  assert.match(serializeConfig(withUrl), /qr=https:\/\/example\.org\/hubland\.html/);
+  assert.match(serializeConfig(parseConfig("s=a&qr")), /(^|&)qr=($|&)/);
+  assert.doesNotMatch(serializeConfig(parseConfig("s=a")), /qr/);
+});
