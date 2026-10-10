@@ -1,4 +1,6 @@
 import {
+  OSM_COPYRIGHT_URL,
+  SOURCES_URL,
   delayMinutes,
   fetchDepartures,
   groupDepartures,
@@ -15,6 +17,12 @@ const element = (tag, className, ...children) => {
   const node = document.createElement(tag);
   if (className) node.className = className;
   node.append(...children.filter((c) => c !== null && c !== undefined && c !== ""));
+  return node;
+};
+
+const link = (href, text) => {
+  const node = element("a", "", text);
+  node.href = href;
   return node;
 };
 
@@ -50,7 +58,20 @@ export function startScreen(root, config) {
       qrCode(),
     ),
     board,
-    element("footer", "legend", setupLink, element("span", "", t.scheduledHint)),
+    element(
+      "footer",
+      "legend",
+      element(
+        "span",
+        "attribution",
+        `${t.data} `,
+        link(SOURCES_URL, SOURCES_URL.replace(/^https:\/\/|\/$/g, "")),
+        " · ",
+        link(OSM_COPYRIGHT_URL, t.osm),
+      ),
+      setupLink,
+      element("span", "hint", t.scheduledHint),
+    ),
   );
 
   function qrCode() {

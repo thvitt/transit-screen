@@ -11,6 +11,8 @@ const STRINGS = {
     failed: "Cannot reach transitous.org",
     scheduledHint: "Grey times are timetable, not live",
     edit: "Edit this screen",
+    data: "Data:",
+    osm: "© OpenStreetMap contributors",
   },
   de: {
     now: "jetzt",
@@ -24,6 +26,8 @@ const STRINGS = {
     failed: "transitous.org nicht erreichbar",
     scheduledHint: "Graue Zeiten laut Fahrplan, ohne Echtzeit",
     edit: "Anzeige bearbeiten",
+    data: "Daten:",
+    osm: "© OpenStreetMap-Mitwirkende",
   },
 };
 

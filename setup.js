@@ -1,4 +1,7 @@
 import {
+  OSM_COPYRIGHT_URL,
+  PROJECT_URL,
+  SOURCES_URL,
   fetchDepartures,
   searchStops,
   serializeConfig,
@@ -414,6 +417,19 @@ export function startSetup(root, initial) {
       "p",
       { class: "hint" },
       "The shortcut file only redirects to this link. Put it on any web server, e.g. as hubland.html next to this page, to get a short address for your signage player.",
+    ),
+
+    element(
+      "footer",
+      { class: "credits" },
+      "Departure data from ",
+      element("a", { href: "https://transitous.org/" }, "Transitous"),
+      " (",
+      element("a", { href: SOURCES_URL }, "data sources and licenses"),
+      "), ",
+      element("a", { href: OSM_COPYRIGHT_URL }, "© OpenStreetMap contributors"),
+      ".",
+      PROJECT_URL ? element("span", {}, " Source code and contact: ", element("a", { href: PROJECT_URL }, PROJECT_URL)) : null,
     ),
   );
 

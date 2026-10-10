@@ -66,6 +66,26 @@ departures are shown in one column.
 
 (Joined into a single line.)
 
+## Data and attribution
+
+Departures come from [Transitous](https://transitous.org), a community-run,
+best-effort service. Follow its [API usage terms](https://transitous.org/api/)
+when you deploy this:
+
+- Non-commercial use only, and keep the load light (the defaults fetch each
+  stop every 30 s). Ask the Transitous team before running many screens.
+- The screen footer and the setup page link to the
+  [data sources](https://transitous.org/sources/) and credit
+  [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
+  Keep these visible.
+- Browsers can't set a `User-Agent`, so Transitous identifies the app by the
+  `Referer` header. Requests send only the origin of your site, not the screen
+  configuration, so make sure that site carries contact information.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
+
 ## Development
 
 `vendor/` contains Kazuhiko Arase's MIT-licensed

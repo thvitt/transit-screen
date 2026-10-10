@@ -259,8 +259,13 @@ body {
   color: var(--muted);
 }
 
-.legend > span {
+.legend .hint {
   margin-left: auto;
+}
+
+.legend .attribution a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .masthead.has-qr {
@@ -487,6 +492,14 @@ body {
 
 .setup a {
   color: var(--signal);
+}
+
+.setup .credits {
+  margin-top: 3rem;
+  border-top: 1px solid var(--rule);
+  padding-top: 0.8rem;
+  font-size: 0.85em;
+  color: var(--muted);
 }
 
 .setup .error {

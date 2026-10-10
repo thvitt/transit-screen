@@ -1,4 +1,12 @@
 export const API_BASE = "https://api.transitous.org/api";
+export const SOURCES_URL = "https://transitous.org/sources/";
+export const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
+// TODO: set to the public repository once published; Transitous wants contact info on the site.
+export const PROJECT_URL = "";
+
+// Browsers can't set a User-Agent, so Transitous identifies us by the Referer.
+// Send the origin only: the full URL carries the screen configuration.
+const API_REQUEST = Object.freeze({ referrerPolicy: "strict-origin-when-cross-origin" });
 
 const DEFAULTS = Object.freeze({
   title: "",
@@ -166,7 +174,7 @@ export async function fetchDepartures(stop, { n, fetchImpl = fetch } = {}) {
   const url = new URL(`${API_BASE}/v5/stoptimes`);
   url.searchParams.set("stopId", stop.id);
   url.searchParams.set("n", String(n ?? DEFAULTS.n));
-  const response = await fetchImpl(url);
+  const response = await fetchImpl(url, API_REQUEST);
   if (!response.ok) throw new Error(`Stop ${stop.id}: HTTP ${response.status}`);
   const data = await response.json();
   return (data.stopTimes ?? []).map((st) => normalizeStopTime(st, stop));
@@ -176,7 +184,7 @@ export async function searchStops(text, { fetchImpl = fetch } = {}) {
   const url = new URL(`${API_BASE}/v1/geocode`);
   url.searchParams.set("text", text);
   url.searchParams.set("type", "STOP");
-  const response = await fetchImpl(url);
+  const response = await fetchImpl(url, API_REQUEST);
   if (!response.ok) throw new Error(`Stop search failed: HTTP ${response.status}`);
   const places = await response.json();
   return places.map((p) => ({
