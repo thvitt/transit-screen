@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap");
+@import url("https://fonts.bunny.net/css?family=inclusive-sans:400,500,600,700&display=swap");
 
 :root {
   --enamel: #00215bff;
@@ -10,8 +10,7 @@
   --alarm: #ff382aff;
   --scale: 1;
   --qr-size: 4.5em;
-  --sans: "Lato", system-ui, sans-serif;
-  --mono: "Lato", ui-monospace, monospace;
+  --sans: "Inclusive Sans", system-ui, sans-serif;
   color-scheme: dark;
 }
 
@@ -72,7 +71,6 @@ body {
 }
 
 .clock {
-  font-family: var(--mono);
   font-weight: 700;
   font-size: 1.9em;
   line-height: 1;
@@ -110,7 +108,7 @@ body {
 .heading {
   margin: 0 0 0.25em;
   font-size: 1.45em;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
   letter-spacing: -0.01em;
   padding-bottom: 0.25em;
@@ -151,7 +149,7 @@ body {
   border-radius: 0.2em;
   background: var(--line-bg);
   color: var(--line-fg);
-  font-weight: 800;
+  font-weight: 700;
   font-size: 0.95em;
   line-height: 1.15;
   white-space: nowrap;
@@ -196,7 +194,6 @@ body {
 }
 
 .countdown {
-  font-family: var(--mono);
   font-weight: 700;
   font-size: 1.35em;
   line-height: 1;
@@ -228,7 +225,6 @@ body {
 }
 
 .planned {
-  font-family: var(--mono);
   font-size: 0.55em;
   color: var(--muted);
   margin-top: 0.2em;
@@ -322,7 +318,7 @@ body {
 
 .setup h1 {
   font-size: 2.2rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
   margin: 0 0 0.4rem;
 }
@@ -341,7 +337,6 @@ body {
 }
 
 .setup code {
-  font-family: var(--mono);
   font-size: 0.9em;
   color: var(--signal);
 }
@@ -421,7 +416,6 @@ body {
 }
 
 .setup .stop-id {
-  font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--muted);
   overflow-wrap: anywhere;
@@ -475,7 +469,6 @@ body {
 
 .setup output {
   display: block;
-  font-family: var(--mono);
   font-size: 0.85rem;
   padding: 0.8rem;
   background: var(--panel);
