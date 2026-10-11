@@ -12,6 +12,7 @@ import { resolveLanguage, strings } from "./i18n.js";
 import { qrCodeSvg } from "./qr.js";
 
 const RENDER_INTERVAL_MS = 5_000;
+const STOP_COLORS = 6;
 
 const element = (tag, className, ...children) => {
   const node = document.createElement(tag);
@@ -139,6 +140,10 @@ export function startScreen(root, config) {
       element("span", "origin-name", tidy(departure.stopName)),
       departure.track ? element("span", "track", `${t.platform} ${departure.track}`) : null,
     );
+    if (config.stops.length > 1) {
+      const stopIndex = config.stops.findIndex((stop) => stop.id === departure.stopId);
+      origin.style.setProperty("--stop-color", `var(--stop-${(stopIndex % STOP_COLORS) + 1})`);
+    }
     return element(
       "li",
       `departure${departure.cancelled ? " is-cancelled" : ""}`,
