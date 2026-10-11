@@ -52,6 +52,9 @@ A rule is `lines:destination`:
 A departure joins every group that has a matching rule. Without any `g`, all
 departures are shown in one column.
 
+A bus that serves several of the stops is listed only once: at the stop with the
+shortest walk you can still reach it from, or the first listed one on a tie.
+
 ## Example: Hubland, Würzburg
 
 ```

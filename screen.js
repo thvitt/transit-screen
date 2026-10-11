@@ -5,6 +5,7 @@ import {
   fetchDepartures,
   groupDepartures,
   minutesUntil,
+  nearestStopOnly,
   selectUpcoming,
   stripPrefixes,
 } from "./lib.js";
@@ -166,7 +167,8 @@ export function startScreen(root, config) {
     renderStatus();
     if (!lastSuccess) return;
 
-    const upcoming = selectUpcoming([...byStop.values()].flat(), now, config.horizon);
+    const reachable = selectUpcoming([...byStop.values()].flat(), now, config.horizon);
+    const upcoming = nearestStopOnly(reachable, config.stops);
     const groups = groupDepartures(upcoming, config.groups, config.other || (config.groups.length ? "" : " "));
     board.replaceChildren(
       ...groups.map((group) => {

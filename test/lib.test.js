@@ -8,6 +8,7 @@ import {
   groupDepartures,
   loadConfigFile,
   minutesUntil,
+  nearestStopOnly,
   normalizeStopTime,
   parseConfig,
   ruleMatches,
@@ -141,6 +142,7 @@ test("normalizes an API stop time", () => {
     },
     { id: "x", label: "", walk: 0 },
   );
+  assert.equal(d.tripId, "t1");
   assert.equal(d.stopName, "Würzburg Campusbrücke");
   assert.equal(d.color, "#f29205");
   assert.equal(d.departure - d.scheduled, 60_000);
@@ -210,4 +212,20 @@ test("qr is off by default, on when present, and may carry its own URL", () => {
   assert.match(serializeConfig(withUrl), /qr=https:\/\/example\.org\/hubland\.html/);
   assert.match(serializeConfig(parseConfig("s=a&qr")), /(^|&)qr=($|&)/);
   assert.doesNotMatch(serializeConfig(parseConfig("s=a")), /qr/);
+});
+
+test("a trip serving several stops is listed only at the nearest one", () => {
+  const stops = [
+    { id: "campus", label: "", walk: 0 },
+    { id: "phil", label: "", walk: 0 },
+    { id: "mensa", label: "", walk: 2 },
+  ];
+  const at = (tripId, stopId, walk = 0) => departure({ key: `${tripId}@${stopId}`, tripId, stopId, walk });
+  const deps = [at("t14", "phil"), at("t14", "campus"), at("t29", "mensa", 2), at("t29", "phil"), at("t10", "mensa", 2)];
+  assert.deepEqual(
+    nearestStopOnly(deps, stops).map((d) => d.key),
+    ["t14@campus", "t29@phil", "t10@mensa"],
+  );
+  const withoutTrip = [departure({ key: "a", stopId: "campus" }), departure({ key: "b", stopId: "phil" })];
+  assert.equal(nearestStopOnly(withoutTrip, stops).length, 2);
 });

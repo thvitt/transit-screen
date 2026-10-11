@@ -219,6 +219,7 @@ export function normalizeStopTime(stopTime, stop) {
   const place = stopTime.place;
   return {
     key: `${stopTime.tripId}@${place.stopId}`,
+    tripId: stopTime.tripId,
     line: stopTime.routeShortName || stopTime.displayName || "",
     color: stopTime.routeColor ? `#${stopTime.routeColor}` : "",
     textColor: stopTime.routeTextColor ? `#${stopTime.routeTextColor}` : "",
@@ -234,6 +235,22 @@ export function normalizeStopTime(stopTime, stop) {
     cancelled: Boolean(stopTime.cancelled || stopTime.tripCancelled || place.cancelled),
     walk: stop.walk,
   };
+}
+
+export function nearestStopOnly(departures, stops) {
+  const rank = (d) => [d.walk, stops.findIndex((stop) => stop.id === d.stopId)];
+  const closer = (a, b) => {
+    const [walkA, indexA] = rank(a);
+    const [walkB, indexB] = rank(b);
+    return walkA - walkB || indexA - indexB;
+  };
+  const trip = (d) => d.tripId || d.key;
+  const best = new Map();
+  for (const d of departures) {
+    const current = best.get(trip(d));
+    if (!current || closer(d, current) < 0) best.set(trip(d), d);
+  }
+  return departures.filter((d) => best.get(trip(d)) === d);
 }
 
 export function selectUpcoming(departures, now, horizonMinutes) {
