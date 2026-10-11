@@ -124,6 +124,8 @@ MIT, see [LICENSE](LICENSE).
 
 ## Development
 
+This software has been developed using AI agents.
+
 `vendor/` contains Kazuhiko Arase's MIT-licensed
 [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator).
 

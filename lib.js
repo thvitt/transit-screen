@@ -2,7 +2,7 @@ export const API_BASE = "https://api.transitous.org/api";
 export const SOURCES_URL = "https://transitous.org/sources/";
 export const OSM_COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
 // TODO: set to the public repository once published; Transitous wants contact info on the site.
-export const PROJECT_URL = "";
+export const PROJECT_URL = "https://github.com/thvitt/transit-screen";
 
 // Browsers can't set a User-Agent, so Transitous identifies us by the Referer.
 // Send the origin only: the full URL carries the screen configuration.

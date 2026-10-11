@@ -1,6 +1,7 @@
 import {
   OSM_COPYRIGHT_URL,
   SOURCES_URL,
+  PROJECT_URL,
   delayMinutes,
   fetchDepartures,
   groupDepartures,
@@ -70,6 +71,8 @@ export function startScreen(root, config) {
         link(SOURCES_URL, SOURCES_URL.replace(/^https:\/\/|\/$/g, "")),
         " · ",
         link(OSM_COPYRIGHT_URL, t.osm),
+        " | ",
+        PROJECT_URL ? element("span", {}, " Source code and contact: ", element("a", { href: PROJECT_URL }, PROJECT_URL)) : null,
       ),
       setupLink,
       element("span", "hint", t.scheduledHint),
