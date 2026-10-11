@@ -2,11 +2,11 @@ import {
   OSM_COPYRIGHT_URL,
   PROJECT_URL,
   SOURCES_URL,
+  configName,
+  configToObject,
   fetchDepartures,
   searchStops,
   serializeConfig,
-  shortcutFileName,
-  shortcutHtml,
   stripPrefixes,
 } from "./lib.js";
 
@@ -22,31 +22,57 @@ const element = (tag, attributes = {}, ...children) => {
 
 const field = (label, input, className) => element("label", { class: className }, label, input);
 
-export function startSetup(root, initial) {
+export function startSetup(root, initial, configFile) {
   const config = structuredClone(initial);
+  let edited = configFile === null;
   root.className = "setup";
   document.title = "Set up departure screen";
 
   const screenUrl = () => {
     const url = new URL(location.href);
-    url.search = serializeConfig(config);
+    if (edited) {
+      url.search = serializeConfig(config);
+    } else {
+      const params = new URLSearchParams(url.search);
+      params.delete("setup");
+      url.search = params.toString();
+    }
     return url.toString();
   };
 
   const output = element("output");
   const openLink = element("a", { target: "_blank" }, "Open screen");
-  const shortcutLink = element("a", {}, "Download shortcut file");
+  const downloadLink = element("a");
+  const fileHint = element("p", { class: "hint" });
 
-  function sync() {
+  function showLinks() {
     const url = screenUrl();
     output.textContent = url;
     openLink.href = url;
-    URL.revokeObjectURL(shortcutLink.href);
-    shortcutLink.href = URL.createObjectURL(new Blob([shortcutHtml(url, config.title)], { type: "text/html" }));
-    shortcutLink.download = shortcutFileName(config.title);
-    const setupUrl = new URL(url);
-    setupUrl.search = `setup&${setupUrl.search.slice(1)}`;
-    history.replaceState(null, "", setupUrl);
+
+    const name = configFile ?? configName(config.title);
+    const json = `${JSON.stringify(configToObject(config), null, 2)}\n`;
+    URL.revokeObjectURL(downloadLink.href);
+    downloadLink.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    downloadLink.download = `${name}.json`;
+    downloadLink.textContent = `Download ${name}.json`;
+    const shortUrl = new URL(`?config=${name}`, url).href;
+    fileHint.textContent =
+      configFile !== null && edited
+        ? `You changed the screen loaded from ${name}.json. Upload the downloaded file to replace it, or use the full link above.`
+        : `For a short address, upload ${name}.json next to this page and open ${shortUrl}. ` +
+          "Edit the file to change the screen; it reloads every night.";
+
+    if (edited) {
+      const setupUrl = new URL(url);
+      setupUrl.search = `setup&${setupUrl.search.slice(1)}`;
+      history.replaceState(null, "", setupUrl);
+    }
+  }
+
+  function sync() {
+    edited = true;
+    showLinks();
   }
 
   const bind = (value, update, attributes = {}) =>
@@ -333,7 +359,7 @@ export function startSetup(root, initial) {
       "div",
       { class: "row" },
       field("QR code", qrToggle, "narrow"),
-      field("QR code link (empty: link to this screen, use your short shortcut address if you have one)", qrUrl),
+      field("QR code link (empty: link to this screen)", qrUrl),
     ),
 
     element("h2", {}, "Stops"),
@@ -412,12 +438,8 @@ export function startSetup(root, initial) {
 
     element("h2", {}, "Screen link"),
     output,
-    element("div", { class: "actions" }, copyButton, openLink, shortcutLink),
-    element(
-      "p",
-      { class: "hint" },
-      "The shortcut file only redirects to this link. Put it on any web server, e.g. as hubland.html next to this page, to get a short address for your signage player.",
-    ),
+    element("div", { class: "actions" }, copyButton, openLink, downloadLink),
+    fileHint,
 
     element(
       "footer",
@@ -435,6 +457,6 @@ export function startSetup(root, initial) {
 
   renderStops();
   renderGroups();
-  sync();
+  showLinks();
   lookUpStopNames();
 }

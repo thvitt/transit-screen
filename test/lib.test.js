@@ -1,15 +1,18 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  configFileUrl,
+  configFromObject,
+  configName,
+  configToObject,
   groupDepartures,
+  loadConfigFile,
   minutesUntil,
   normalizeStopTime,
   parseConfig,
   ruleMatches,
   selectUpcoming,
   serializeConfig,
-  shortcutFileName,
-  shortcutHtml,
   stripPrefixes,
 } from "../lib.js";
 
@@ -144,18 +147,59 @@ test("normalizes an API stop time", () => {
   assert.equal(d.cancelled, false);
 });
 
-test("shortcut page redirects to the escaped screen URL", () => {
-  const url = "https://example.org/transit/?title=A&B&s=x|\"y\"";
-  const html = shortcutHtml(url, "Hubland <Campus>");
-  assert.match(html, /<meta http-equiv="refresh" content="0; url=https:\/\/example\.org\/transit\/\?title=A&amp;B&amp;s=x\|&quot;y&quot;">/);
-  assert.match(html, /location\.replace\("https:\/\/example\.org\/transit\/\?title=A&B&s=x\|\\"y\\""\)/);
-  assert.match(html, /<title>Hubland &lt;Campus&gt;<\/title>/);
+test("config file name is a readable slug of the title", () => {
+  assert.equal(configName("Hubland Campus / Süd"), "hubland-campus-sud");
+  assert.equal(configName("Straße"), "strasse");
+  assert.equal(configName(""), "departures");
 });
 
-test("shortcut file name is a readable slug of the title", () => {
-  assert.equal(shortcutFileName("Hubland Campus / Süd"), "hubland-campus-sud.html");
-  assert.equal(shortcutFileName("Straße"), "strasse.html");
-  assert.equal(shortcutFileName(""), "departures.html");
+test("config files round-trip and leave out defaults", () => {
+  const config = parseConfig(exampleSearch + "&refresh=60&strip=W%C3%BCrzburg&qr");
+  const data = configToObject(config);
+  assert.deepEqual(data.stops[1], { id: "de-DELFI_de:09663:246:0:11" });
+  assert.equal(data.refresh, 60);
+  assert.equal("horizon" in data, false);
+  assert.deepEqual(configFromObject(JSON.parse(JSON.stringify(data))), config);
+});
+
+test("missing keys in a config file take the defaults", () => {
+  assert.deepEqual(configFromObject({}), parseConfig(""));
+});
+
+test("config files reject malformed entries", () => {
+  assert.throws(() => configFromObject([]), /JSON object/);
+  assert.throws(() => configFromObject({ stops: [{ label: "x" }] }), /stops\[0\] needs an "id"/);
+  assert.throws(() => configFromObject({ groups: [{ rules: "10" }] }), /"rules" must be a list/);
+  assert.throws(() => configFromObject({ title: 3 }), /"title" must be text/);
+});
+
+test("URL parameters override the config file", () => {
+  const base = configFromObject({ title: "Hubland", scale: 1.2, stops: [{ id: "a" }], strip: ["Würzburg"] });
+  const config = parseConfig("config=hubland&scale=1.5&s=b|B", base);
+  assert.equal(config.title, "Hubland");
+  assert.equal(config.scale, 1.5);
+  assert.deepEqual(config.stops, [{ id: "b", label: "B", walk: 0 }]);
+  assert.deepEqual(config.strip, ["Würzburg"]);
+});
+
+test("config names are restricted to files next to the page", () => {
+  assert.equal(configFileUrl("zpd", "https://example.org/screen/?config=zpd").href, "https://example.org/screen/zpd.json");
+  for (const name of ["../x", "https://evil.example/x", "a/b", "ZPD", ""]) {
+    assert.throws(() => configFileUrl(name, "https://example.org/"), /Invalid config name/);
+  }
+});
+
+test("loading a config file reports the file on failure", async () => {
+  const respond = (status, body) => async (url, init) => {
+    assert.equal(url.href, "https://example.org/zpd.json");
+    assert.equal(init.cache, "no-cache");
+    return { ok: status === 200, status, json: async () => body };
+  };
+  const options = (fetchImpl) => ({ base: "https://example.org/", fetchImpl });
+  const config = await loadConfigFile("zpd", options(respond(200, { title: "ZPD", stops: [{ id: "a" }] })));
+  assert.equal(config.title, "ZPD");
+  await assert.rejects(loadConfigFile("zpd", options(respond(404))), /Config zpd\.json: HTTP 404/);
+  await assert.rejects(loadConfigFile("zpd", options(respond(200, { stops: {} }))), /Config zpd\.json: "stops" must be a list/);
 });
 
 test("qr is off by default, on when present, and may carry its own URL", () => {

@@ -56,25 +56,112 @@ export function serializeGroup({ heading, rules }) {
   return [heading, ...rules.map(serializeRule)].join("|");
 }
 
-export function parseConfig(search) {
-  const params = new URLSearchParams(search);
-  const number = (key) => {
-    const value = Number(params.get(key));
-    return params.has(key) && Number.isFinite(value) && value > 0 ? value : DEFAULTS[key];
-  };
+const positiveNumber = (value, fallback) => {
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? number : fallback;
+};
+
+const isObject = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
+
+function listOf(data, key, read) {
+  const value = data[key] ?? [];
+  if (!Array.isArray(value)) throw new Error(`"${key}" must be a list`);
+  return value.map((item, index) => read(item, `${key}[${index}]`));
+}
+
+function textOf(data, key, fallback = "") {
+  const value = data[key] ?? fallback;
+  if (typeof value !== "string") throw new Error(`"${key}" must be text`);
+  return value;
+}
+
+const stopFromObject = (stop, path) => {
+  if (!isObject(stop) || typeof stop.id !== "string" || !stop.id.trim()) throw new Error(`${path} needs an "id"`);
+  return { id: stop.id.trim(), label: textOf(stop, "label").trim(), walk: positiveNumber(stop.walk, 0) };
+};
+
+const ruleFromObject = (rule, path) => {
+  if (!isObject(rule)) throw new Error(`${path} must be an object`);
+  return { lines: listOf(rule, "lines", String), headsign: textOf(rule, "headsign").trim() };
+};
+
+const groupFromObject = (group, path) => {
+  if (!isObject(group)) throw new Error(`${path} must be an object`);
+  return { heading: textOf(group, "heading").trim(), rules: listOf(group, "rules", ruleFromObject) };
+};
+
+export function configFromObject(data) {
+  if (!isObject(data)) throw new Error("expected a JSON object");
+  const qr = data.qr ?? null;
+  if (qr !== null && typeof qr !== "string") throw new Error('"qr" must be text');
   return {
-    stops: params.getAll("s").filter(Boolean).map(parseStop),
-    groups: params.getAll("g").filter(Boolean).map(parseGroup),
-    strip: params.getAll("strip").filter(Boolean),
-    title: params.get("title") ?? DEFAULTS.title,
-    lang: params.get("lang") ?? DEFAULTS.lang,
-    other: params.get("other") ?? DEFAULTS.other,
-    qr: params.has("qr") ? params.get("qr") : null,
+    stops: listOf(data, "stops", stopFromObject),
+    groups: listOf(data, "groups", groupFromObject),
+    strip: listOf(data, "strip", String).filter(Boolean),
+    title: textOf(data, "title", DEFAULTS.title),
+    lang: textOf(data, "lang", DEFAULTS.lang),
+    other: textOf(data, "other", DEFAULTS.other),
+    qr,
+    refresh: positiveNumber(data.refresh, DEFAULTS.refresh),
+    horizon: positiveNumber(data.horizon, DEFAULTS.horizon),
+    n: positiveNumber(data.n, DEFAULTS.n),
+    scale: positiveNumber(data.scale, DEFAULTS.scale),
+  };
+}
+
+export function configToObject(config) {
+  const data = {};
+  for (const key of ["title", "lang"]) if (config[key]) data[key] = config[key];
+  if (config.strip.length) data.strip = config.strip;
+  data.stops = config.stops.map(({ id, label, walk }) => ({ id, ...(label && { label }), ...(walk && { walk }) }));
+  data.groups = config.groups.map(({ heading, rules }) => ({
+    heading,
+    rules: rules.map(({ lines, headsign }) => ({ lines, headsign })),
+  }));
+  if (config.other) data.other = config.other;
+  if (config.qr !== null) data.qr = config.qr;
+  for (const key of ["refresh", "horizon", "n", "scale"]) {
+    if (config[key] !== DEFAULTS[key]) data[key] = config[key];
+  }
+  return data;
+}
+
+export function parseConfig(search, base = configFromObject({})) {
+  const params = new URLSearchParams(search);
+  const number = (key) => (params.has(key) ? positiveNumber(params.get(key), base[key]) : base[key]);
+  const list = (key, field, parse) => (params.has(key) ? params.getAll(key).filter(Boolean).map(parse) : base[field]);
+  return {
+    stops: list("s", "stops", parseStop),
+    groups: list("g", "groups", parseGroup),
+    strip: list("strip", "strip", String),
+    title: params.get("title") ?? base.title,
+    lang: params.get("lang") ?? base.lang,
+    other: params.get("other") ?? base.other,
+    qr: params.has("qr") ? params.get("qr") : base.qr,
     refresh: number("refresh"),
     horizon: number("horizon"),
     n: number("n"),
     scale: number("scale"),
   };
+}
+
+const CONFIG_NAME = /^[a-z0-9-]+$/;
+
+export function configFileUrl(name, base) {
+  if (!CONFIG_NAME.test(name)) {
+    throw new Error(`Invalid config name "${name}": use lowercase letters, digits and dashes`);
+  }
+  return new URL(`${name}.json`, base);
+}
+
+export async function loadConfigFile(name, { base = globalThis.location?.href, fetchImpl = fetch } = {}) {
+  const response = await fetchImpl(configFileUrl(name, base), { cache: "no-cache" });
+  if (!response.ok) throw new Error(`Config ${name}.json: HTTP ${response.status}`);
+  try {
+    return configFromObject(await response.json());
+  } catch (error) {
+    throw new Error(`Config ${name}.json: ${error.message}`, { cause: error });
+  }
 }
 
 export function serializeConfig(config) {
@@ -195,28 +282,7 @@ export async function searchStops(text, { fetchImpl = fetch } = {}) {
   }));
 }
 
-const escapeHtml = (text) =>
-  String(text).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-
-export function shortcutHtml(url, title) {
-  const href = escapeHtml(url);
-  const script = JSON.stringify(url).replace(/</g, "\\u003c");
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>${escapeHtml(title || "Departures")}</title>
-    <meta http-equiv="refresh" content="0; url=${href}">
-    <script>location.replace(${script});</script>
-  </head>
-  <body>
-    <a href="${href}">${escapeHtml(title || "Departures")}</a>
-  </body>
-</html>
-`;
-}
-
-export function shortcutFileName(title) {
+export function configName(title) {
   const slug = (title ?? "")
     .toLowerCase()
     .replace(/ß/g, "ss")
@@ -224,5 +290,5 @@ export function shortcutFileName(title) {
     .replace(/\p{Diacritic}/gu, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  return `${slug || "departures"}.html`;
+  return slug || "departures";
 }
