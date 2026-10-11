@@ -1,4 +1,4 @@
-@import url("https://fonts.bunny.net/css?family=inclusive-sans:400,500,600,700&display=swap");
+@import url("https://fonts.bunny.net/css?family=inclusive-sans:400,500,500i,600,700,700i&display=swap");
 
 :root {
   --enamel: #00215bff;
@@ -216,6 +216,10 @@ body {
 
 .countdown.is-scheduled {
   color: var(--muted);
+}
+
+.countdown:not(.is-scheduled, .is-cancelled) {
+  font-style: italic;
 }
 
 .countdown.is-cancelled {
