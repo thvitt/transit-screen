@@ -72,7 +72,7 @@ export function startScreen(root, config) {
         " · ",
         link(OSM_COPYRIGHT_URL, t.osm),
         " | ",
-        PROJECT_URL ? element("span", {}, " Source code and contact: ", element("a", { href: PROJECT_URL }, PROJECT_URL)) : null,
+        PROJECT_URL ? element("span", {}, " Source code and contact: ", link(PROJECT_URL, PROJECT_URL)) : null,
       ),
       setupLink,
       element("span", "hint", t.scheduledHint),
