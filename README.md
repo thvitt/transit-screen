@@ -30,7 +30,7 @@ a night.
 | Parameter | Meaning |
 | --- | --- |
 | `config=Name` | Load the settings from `Name.json`, see [Config files](#config-files). |
-| `s=ID\|Label\|Walk` | A stop (repeatable). `Label` replaces the stop name, `Walk` (minutes) hides buses you can't reach anymore. Both optional. |
+| `s=ID\|Label\|Walk\|Lat,Lon` | A stop (repeatable). `Label` replaces the stop name, `Walk` (minutes) hides buses you can't reach anymore, `Lat,Lon` is the stop's position. All optional. |
 | `g=Heading\|Rule\|Rule…` | A destination group (repeatable), shown as one column. |
 | `other=Heading` | Show departures that match no group under this heading. Hidden if not set. |
 | `title=Text` | Title in the header. Defaults to the stop labels. |
@@ -41,6 +41,7 @@ a night.
 | `horizon=120` | Only show departures within this many minutes. |
 | `refresh=30` | Data refresh interval in seconds. |
 | `n=40` | Departures fetched per stop. |
+| `radius=50` | Also include stops within this many metres of a stop's position. |
 
 A rule is `lines:destination`:
 
@@ -51,6 +52,10 @@ A rule is `lines:destination`:
 
 A departure joins every group that has a matching rule. Without any `g`, all
 departures are shown in one column.
+
+Stop IDs change when Transitous reorganizes its data sources. The setup page
+therefore stores each stop's position, and the screen asks for departures at all
+stations within `radius` of it as well, so a stale ID keeps working.
 
 A bus that serves several of the stops is listed only once: at the stop with the
 shortest walk you can still reach it from, or the first listed one on a tie.
@@ -82,7 +87,7 @@ same settings as the URL:
   "strip": ["Würzburg", "Wü"],
   "stops": [
     { "id": "de-DELFI_de:09663:33:0:11" },
-    { "id": "de-DELFI_de:09663:308:0:11", "label": "Phil. Fak.", "walk": 3 }
+    { "id": "de-DELFI_de:09663:308:0:11", "label": "Phil. Fak.", "walk": 3, "center": "49.7845,9.9699" }
   ],
   "groups": [
     { "heading": "City/Bahnhof", "rules": [{ "lines": [], "headsign": "Hauptbahnhof" }] },

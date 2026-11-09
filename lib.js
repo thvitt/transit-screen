@@ -16,16 +16,29 @@ const DEFAULTS = Object.freeze({
   horizon: 120,
   n: 40,
   scale: 1,
+  radius: 50,
 });
 
-export function parseStop(raw) {
-  const [id, label = "", walk = ""] = raw.split("|");
-  if (!id.trim()) throw new Error(`Invalid stop "${raw}": missing stop id`);
-  return { id: id.trim(), label: label.trim(), walk: Number(walk) || 0 };
+const COORDINATES = /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/;
+
+function parseCenter(raw, stopId) {
+  const center = (raw ?? "").replace(/\s+/g, "");
+  if (center && !COORDINATES.test(center)) throw new Error(`Invalid position "${raw}" for stop ${stopId}: use lat,lon`);
+  return center;
 }
 
-export function serializeStop({ id, label, walk }) {
-  return [id, label ?? "", walk ? String(walk) : ""].join("|").replace(/\|+$/, "");
+export function formatCenter(lat, lon) {
+  return Number.isFinite(lat) && Number.isFinite(lon) ? `${+lat.toFixed(6)},${+lon.toFixed(6)}` : "";
+}
+
+export function parseStop(raw) {
+  const [id, label = "", walk = "", center = ""] = raw.split("|");
+  if (!id.trim()) throw new Error(`Invalid stop "${raw}": missing stop id`);
+  return { id: id.trim(), label: label.trim(), walk: Number(walk) || 0, center: parseCenter(center, id.trim()) };
+}
+
+export function serializeStop({ id, label, walk, center }) {
+  return [id, label ?? "", walk ? String(walk) : "", center ?? ""].join("|").replace(/\|+$/, "");
 }
 
 export function parseRule(raw) {
@@ -77,7 +90,13 @@ function textOf(data, key, fallback = "") {
 
 const stopFromObject = (stop, path) => {
   if (!isObject(stop) || typeof stop.id !== "string" || !stop.id.trim()) throw new Error(`${path} needs an "id"`);
-  return { id: stop.id.trim(), label: textOf(stop, "label").trim(), walk: positiveNumber(stop.walk, 0) };
+  const id = stop.id.trim();
+  return {
+    id,
+    label: textOf(stop, "label").trim(),
+    walk: positiveNumber(stop.walk, 0),
+    center: parseCenter(textOf(stop, "center"), id),
+  };
 };
 
 const ruleFromObject = (rule, path) => {
@@ -106,6 +125,7 @@ export function configFromObject(data) {
     horizon: positiveNumber(data.horizon, DEFAULTS.horizon),
     n: positiveNumber(data.n, DEFAULTS.n),
     scale: positiveNumber(data.scale, DEFAULTS.scale),
+    radius: positiveNumber(data.radius, DEFAULTS.radius),
   };
 }
 
@@ -113,14 +133,19 @@ export function configToObject(config) {
   const data = {};
   for (const key of ["title", "lang"]) if (config[key]) data[key] = config[key];
   if (config.strip.length) data.strip = config.strip;
-  data.stops = config.stops.map(({ id, label, walk }) => ({ id, ...(label && { label }), ...(walk && { walk }) }));
+  data.stops = config.stops.map(({ id, label, walk, center }) => ({
+    id,
+    ...(label && { label }),
+    ...(walk && { walk }),
+    ...(center && { center }),
+  }));
   data.groups = config.groups.map(({ heading, rules }) => ({
     heading,
     rules: rules.map(({ lines, headsign }) => ({ lines, headsign })),
   }));
   if (config.other) data.other = config.other;
   if (config.qr !== null) data.qr = config.qr;
-  for (const key of ["refresh", "horizon", "n", "scale"]) {
+  for (const key of ["refresh", "horizon", "n", "scale", "radius"]) {
     if (config[key] !== DEFAULTS[key]) data[key] = config[key];
   }
   return data;
@@ -142,6 +167,7 @@ export function parseConfig(search, base = configFromObject({})) {
     horizon: number("horizon"),
     n: number("n"),
     scale: number("scale"),
+    radius: number("radius"),
   };
 }
 
@@ -172,7 +198,7 @@ export function serializeConfig(config) {
   if (config.other) params.set("other", config.other);
   for (const prefix of config.strip ?? []) params.append("strip", prefix);
   if (config.qr !== null && config.qr !== undefined) params.set("qr", config.qr);
-  for (const key of ["lang", "refresh", "horizon", "n", "scale"]) {
+  for (const key of ["lang", "refresh", "horizon", "n", "scale", "radius"]) {
     if (config[key] && config[key] !== DEFAULTS[key]) params.set(key, String(config[key]));
   }
   return params
@@ -234,6 +260,7 @@ export function normalizeStopTime(stopTime, stop) {
     realTime: Boolean(stopTime.realTime),
     cancelled: Boolean(stopTime.cancelled || stopTime.tripCancelled || place.cancelled),
     walk: stop.walk,
+    center: formatCenter(place.lat, place.lon),
   };
 }
 
@@ -274,9 +301,13 @@ export function delayMinutes(departure) {
   return Math.round((departure.departure - departure.scheduled) / 60_000);
 }
 
-export async function fetchDepartures(stop, { n, fetchImpl = fetch } = {}) {
+export async function fetchDepartures(stop, { n, radius, fetchImpl = fetch } = {}) {
   const url = new URL(`${API_BASE}/v5/stoptimes`);
   url.searchParams.set("stopId", stop.id);
+  if (stop.center) {
+    url.searchParams.set("center", stop.center);
+    url.searchParams.set("radius", String(radius ?? DEFAULTS.radius));
+  }
   url.searchParams.set("n", String(n ?? DEFAULTS.n));
   const response = await fetchImpl(url, API_REQUEST);
   if (!response.ok) throw new Error(`Stop ${stop.id}: HTTP ${response.status}`);
@@ -296,6 +327,7 @@ export async function searchStops(text, { fetchImpl = fetch } = {}) {
     name: p.name,
     area: p.areas?.find((a) => a.default)?.name ?? "",
     modes: p.modes ?? [],
+    center: formatCenter(p.lat, p.lon),
   }));
 }
 

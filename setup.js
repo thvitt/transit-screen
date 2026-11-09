@@ -130,9 +130,12 @@ export function startSetup(root, initial, configFile) {
 
   async function lookUpStopNames() {
     const unnamed = config.stops.filter((stop) => !stop.name);
-    const results = await Promise.allSettled(unnamed.map((stop) => fetchDepartures({ id: stop.id }, { n: 1 })));
+    const results = await Promise.allSettled(unnamed.map((stop) => fetchDepartures({ id: stop.id, center: stop.center }, { n: 1, radius: config.radius })));
     results.forEach((result, index) => {
-      if (result.status === "fulfilled" && result.value.length) unnamed[index].name = result.value[0].stopName;
+      if (result.status !== "fulfilled" || !result.value.length) return;
+      const [first] = result.value;
+      unnamed[index].name = first.stopName;
+      unnamed[index].center ||= first.center;
     });
     if (!stopsSection.contains(document.activeElement)) renderStops();
   }
@@ -240,7 +243,7 @@ export function startSetup(root, initial, configFile) {
   async function loadSeenRoutes(button) {
     button.disabled = true;
     try {
-      const results = await Promise.all(config.stops.map((stop) => fetchDepartures(stop, { n: 80 })));
+      const results = await Promise.all(config.stops.map((stop) => fetchDepartures(stop, { n: 80, radius: config.radius })));
       const unique = new Map();
       for (const d of results.flat()) {
         const headsign = stripPrefixes(d.headsign, config.strip);
@@ -274,7 +277,7 @@ export function startSetup(root, initial, configFile) {
               {
                 class: "quiet",
                 onclick: () => {
-                  config.stops.push({ id: stop.id, label: "", walk: 0, name: stop.name });
+                  config.stops.push({ id: stop.id, label: "", walk: 0, center: stop.center, name: stop.name });
                   renderStops();
                   sync();
                 },

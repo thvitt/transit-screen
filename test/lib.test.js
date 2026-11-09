@@ -5,6 +5,7 @@ import {
   configFromObject,
   configName,
   configToObject,
+  fetchDepartures,
   groupDepartures,
   loadConfigFile,
   minutesUntil,
@@ -36,8 +37,8 @@ const exampleSearch =
 test("parses stops, groups and rules from the URL", () => {
   const config = parseConfig(exampleSearch);
   assert.deepEqual(config.stops, [
-    { id: "de-DELFI_de:09663:33:0:11", label: "Campusbrücke", walk: 3 },
-    { id: "de-DELFI_de:09663:246:0:11", label: "", walk: 0 },
+    { id: "de-DELFI_de:09663:33:0:11", label: "Campusbrücke", walk: 3, center: "" },
+    { id: "de-DELFI_de:09663:246:0:11", label: "", walk: 0, center: "" },
   ]);
   assert.equal(config.title, "Hubland");
   assert.deepEqual(config.groups[0], {
@@ -60,8 +61,31 @@ test("line-only and multi-line rules", () => {
 });
 
 test("serializing round-trips", () => {
-  const config = parseConfig(exampleSearch + "&refresh=60&strip=W%C3%BCrzburg");
+  const config = parseConfig(exampleSearch + "&refresh=60&strip=W%C3%BCrzburg&s=a||2|49.78,9.97&radius=80");
   assert.deepEqual(parseConfig(serializeConfig(config)), config);
+});
+
+test("stops carry an optional position", () => {
+  const { stops } = parseConfig("s=a|||49.782323,9.966889&s=b|B");
+  assert.equal(stops[0].center, "49.782323,9.966889");
+  assert.equal(stops[1].center, "");
+  assert.throws(() => parseConfig("s=a|||north"), /Invalid position/);
+  assert.equal(configFromObject({ stops: [{ id: "a", center: "1.5,-2" }] }).stops[0].center, "1.5,-2");
+});
+
+test("stop times are requested by id with the stop position as fallback", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(new URL(url));
+    return { ok: true, json: async () => ({ stopTimes: [] }) };
+  };
+  await fetchDepartures({ id: "a", center: "49.78,9.97" }, { n: 5, radius: 30, fetchImpl });
+  await fetchDepartures({ id: "b", center: "" }, { fetchImpl });
+  assert.equal(urls[0].searchParams.get("stopId"), "a");
+  assert.equal(urls[0].searchParams.get("center"), "49.78,9.97");
+  assert.equal(urls[0].searchParams.get("radius"), "30");
+  assert.equal(urls[1].searchParams.has("center"), false);
+  assert.equal(urls[1].searchParams.has("radius"), false);
 });
 
 test("rules match line and headsign substrings ignoring case and diacritics", () => {
@@ -138,6 +162,8 @@ test("normalizes an API stop time", () => {
         track: "11",
         departure: "2026-10-01T11:54:00Z",
         scheduledDeparture: "2026-10-01T11:53:00Z",
+        lat: 49.782323000000005,
+        lon: 9.966889000000002,
       },
     },
     { id: "x", label: "", walk: 0 },
@@ -147,6 +173,7 @@ test("normalizes an API stop time", () => {
   assert.equal(d.color, "#f29205");
   assert.equal(d.departure - d.scheduled, 60_000);
   assert.equal(d.cancelled, false);
+  assert.equal(d.center, "49.782323,9.966889");
 });
 
 test("config file name is a readable slug of the title", () => {
@@ -180,7 +207,7 @@ test("URL parameters override the config file", () => {
   const config = parseConfig("config=hubland&scale=1.5&s=b|B", base);
   assert.equal(config.title, "Hubland");
   assert.equal(config.scale, 1.5);
-  assert.deepEqual(config.stops, [{ id: "b", label: "B", walk: 0 }]);
+  assert.deepEqual(config.stops, [{ id: "b", label: "B", walk: 0, center: "" }]);
   assert.deepEqual(config.strip, ["Würzburg"]);
 });
 
