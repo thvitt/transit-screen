@@ -139,12 +139,9 @@ export function startScreen(root, config) {
       badge.style.setProperty("--line-bg", departure.color);
       badge.style.setProperty("--line-fg", departure.textColor || "#fff");
     }
-    const origin = element(
-      "span",
-      "origin",
-      element("span", "origin-name", tidy(departure.stopName)),
-      departure.track ? element("span", "track", `${t.platform} ${departure.track}`) : null,
-    );
+    const track = departure.track ? element("span", "track", departure.track) : null;
+    track?.setAttribute("title", `${t.platform} ${departure.track}`);
+    const origin = element("span", "origin", element("span", "origin-name", tidy(departure.stopName)), track);
     if (config.stops.length > 1) {
       const stopIndex = config.stops.findIndex((stop) => stop.id === departure.stopId);
       origin.style.setProperty("--stop-color", `var(--stop-${(stopIndex % STOP_COLORS) + 1})`);
