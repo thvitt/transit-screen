@@ -142,6 +142,10 @@ body {
   border-bottom: 1px solid var(--rule);
 }
 
+.departure.is-unreachable {
+  opacity: 0.45;
+}
+
 .departure:last-child {
   border-bottom: 0;
 }

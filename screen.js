@@ -5,6 +5,7 @@ import {
   delayMinutes,
   fetchDepartures,
   groupDepartures,
+  isReachable,
   minutesUntil,
   nearestStopOnly,
   selectUpcoming,
@@ -150,7 +151,7 @@ export function startScreen(root, config) {
     }
     return element(
       "li",
-      `departure${departure.cancelled ? " is-cancelled" : ""}`,
+      `departure${departure.cancelled ? " is-cancelled" : ""}${isReachable(departure, now) ? "" : " is-unreachable"}`,
       badge,
       element("span", "where", element("span", "headsign", tidy(departure.headsign)), origin),
       element("span", "when", renderCountdown(departure, now), renderClockTime(departure)),
@@ -170,8 +171,8 @@ export function startScreen(root, config) {
     renderStatus();
     if (!lastSuccess) return;
 
-    const reachable = selectUpcoming([...byStop.values()].flat(), now, config.horizon);
-    const upcoming = nearestStopOnly(reachable, config.stops);
+    const pending = selectUpcoming([...byStop.values()].flat(), now, config.horizon);
+    const upcoming = nearestStopOnly(pending, config.stops);
     const groups = groupDepartures(upcoming, config.groups, config.other || (config.groups.length ? "" : " "));
     board.replaceChildren(
       ...groups.map((group) => {

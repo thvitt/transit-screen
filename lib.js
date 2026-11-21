@@ -280,6 +280,16 @@ export function nearestStopOnly(departures, stops) {
   return departures.filter((d) => best.get(trip(d)) === d);
 }
 
+const DEPARTURE_GRACE_MS = 30_000;
+
+export function hasLeft(departure, now) {
+  return departure.departure.getTime() < now.getTime() - DEPARTURE_GRACE_MS;
+}
+
+export function isReachable(departure, now) {
+  return departure.departure.getTime() - departure.walk * 60_000 >= now.getTime() - DEPARTURE_GRACE_MS;
+}
+
 export function selectUpcoming(departures, now, horizonMinutes) {
   const horizon = now.getTime() + horizonMinutes * 60_000;
   const seen = new Set();
@@ -287,8 +297,7 @@ export function selectUpcoming(departures, now, horizonMinutes) {
     .filter((d) => {
       if (seen.has(d.key)) return false;
       seen.add(d.key);
-      const reachable = d.departure.getTime() - d.walk * 60_000 >= now.getTime() - 30_000;
-      return reachable && d.departure.getTime() <= horizon;
+      return !hasLeft(d, now) && d.departure.getTime() <= horizon;
     })
     .sort((a, b) => a.departure - b.departure);
 }

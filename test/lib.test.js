@@ -7,6 +7,7 @@ import {
   configToObject,
   fetchDepartures,
   groupDepartures,
+  isReachable,
   loadConfigFile,
   minutesUntil,
   nearestStopOnly,
@@ -119,7 +120,7 @@ test("groups departures and collects unmatched ones under the other heading", ()
   assert.deepEqual(groupDepartures(deps, [], "")[0].departures, deps);
 });
 
-test("selectUpcoming drops unreachable, distant and duplicate departures", () => {
+test("selectUpcoming keeps unreachable but drops departed, distant and duplicate departures", () => {
   const now = new Date("2026-10-01T12:00:00Z");
   const at = (minutes) => new Date(now.getTime() + minutes * 60_000);
   const deps = [
@@ -132,8 +133,10 @@ test("selectUpcoming drops unreachable, distant and duplicate departures", () =>
   ];
   assert.deepEqual(
     selectUpcoming(deps, now, 120).map((d) => d.key),
-    ["a", "b"],
+    ["a", "walk", "b"],
   );
+  assert.equal(isReachable(deps[2], now), true);
+  assert.equal(isReachable(deps[3], now), false);
   assert.equal(minutesUntil(at(2.9), now), 2);
 });
 
